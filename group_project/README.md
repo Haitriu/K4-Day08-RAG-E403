@@ -79,10 +79,10 @@ Xem code mẫu (DeepEval/RAGAS/TruLens) chi tiết trong `README.md` gốc mục
 
 | Thành viên | MSSV | Nhiệm vụ | Trạng thái |
 |-----------|------|----------|------------|
-| | | | |
-| | | | |
-| | | | |
-| | | | |
+| Vũ Bảo Khánh* | 2A202601122 | Team Leader & RAG Architect (Ghép code tổng hợp, Code Task 6, 7, 8, 9) | Hoàn thành |
+| Võ Hồ Nhật Nam | 2A202601700 | Data & Retrieval Specialist (Thu thập dữ liệu, Convert Markdown, Code Task 1-5) | Đang làm |
+| Nguyễn Xuân Hải | 2A202602022 | Frontend & Chatbot Developer (Dựng Streamlit app.py, Code Task 10 LLM Generation) | Hoàn thành |
+| Phạm Đức Hải Triều | 2A202601980 | Evaluation & QA Engineer (Tạo golden_dataset, chạy RAGAS eval, viết báo cáo) | Hoàn thành |
 
 ---
 
