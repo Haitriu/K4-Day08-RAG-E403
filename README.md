@@ -555,14 +555,30 @@ run_dashboard()
 
 ---
 
-### Phân Công Công Việc
+### Phân Công Công Việc Chi Tiết
 
-| Thành viên | MSSV | Nhiệm vụ | Trạng thái |
-|-----------|------|----------|------------|
-| | | | |
-| | | | |
-| | | | |
-| | | | |
+**1. Thành viên 1: Vũ Bảo Khánh* (2A202601122) - Data Engineer (Kỹ sư Dữ liệu)**
+- **Task 1 (Thu thập Luật):** Tải tối thiểu 3 văn bản (Bộ Luật Lao Động 2019, Nghị định hướng dẫn) định dạng PDF/DOCX lưu vào `data/landing/legal/`.
+- **Task 2 (Crawl báo):** Dùng thư viện `Crawl4AI` thu thập ít nhất 5 bài viết giải đáp tình huống luật lao động thực tế, lưu JSON/HTML vào `data/landing/news/`.
+- **Task 3 (Markdown):** Dùng `MarkItDown` chuyển đổi toàn bộ tài liệu đã tải sang định dạng Markdown chuẩn, lưu vào `data/standardized/`.
+- **Task 4 (Chunking & Vector DB):** Viết code phân mảnh tài liệu luật (nên ưu tiên `MarkdownHeaderTextSplitter` để giữ nguyên cấu trúc Điều, Khoản), dùng embedding model tiếng Việt (như `BAAI/bge-m3`) và lập chỉ mục lưu vào ChromaDB.
+
+**2. Thành viên 2: Phạm Đức Hải Triều (2A202601980) - Retrieval Engineer (Kỹ sư Tìm kiếm)**
+- **Task 5 (Semantic Search):** Viết hàm tìm kiếm Vector (Dense retrieval) truy vấn trên ChromaDB để lấy các đoạn văn bản có ngữ nghĩa liên quan nhất.
+- **Task 6 (Lexical Search):** Sử dụng thư viện `rank-bm25` viết module tìm kiếm từ khóa chính xác (rất quan trọng để tìm đúng "Điều 15", "Hợp đồng lao động").
+- **Task 7 (Reranking):** Tích hợp Cross-encoder (như API Jina Reranker hoặc Qwen) để chấm điểm và xếp hạng lại kết quả từ Task 5 và Task 6.
+- **Task 8 (Fallback):** Đăng ký và upload tài liệu luật lên PageIndex, viết hàm `pageindex_search` làm phương án dự phòng khi các công cụ trên không tìm ra.
+
+**3. Thành viên 3: Nguyễn Xuân Hải (2A202602022) - Integration & UI (Kỹ sư Tích hợp & Giao diện)**
+- **Task 9 (Pipeline Integration):** Gộp các luồng tìm kiếm (Semantic, Lexical, PageIndex) thành một quy trình `retrieve` duy nhất có logic fallback rõ ràng.
+- **Task 10 (LLM Generation):** Thiết kế System Prompt chuyên biệt cho bot Luật, bắt buộc LLM sinh câu trả lời đi kèm trích dẫn (ví dụ: `[Điều 13, BLLĐ 2019]`). Viết code sắp xếp lại chunks để tránh LLM quên thông tin (lost in the middle).
+- **Bài Nhóm (Chatbot UI):** Dựng giao diện bằng Streamlit/Chainlit, hiển thị khung chat, lưu lịch sử trò chuyện và show được các nguồn tài liệu luật đã sử dụng bên cạnh câu trả lời.
+
+**4. Thành viên 4: Võ Hồ Nhật Nam (2A202601700) - QA & Evaluation (Kỹ sư Đánh giá & QA)**
+- **Golden Dataset:** Tự tay soạn file `golden_dataset.json` chứa ít nhất 15 cặp Câu hỏi - Trả lời chuẩn (Ground Truth) xoay quanh các thắc mắc luật lao động của người trẻ.
+- **Automated Eval:** Viết script dùng framework DeepEval hoặc RAGAS chạy test tự động để đo độ chính xác (Chatbot có bịa luật không? Có lấy đúng đoạn luật cần thiết không?).
+- **A/B Testing:** Chạy so sánh thử nghiệm hệ thống giữa việc CÓ dùng Reranking và KHÔNG dùng Reranking.
+- **Report:** Phân tích những câu chatbot trả lời sai luật (worst performers) và tóm tắt đề xuất cải tiến vào file báo cáo `results.md`.
 
 ---
 
