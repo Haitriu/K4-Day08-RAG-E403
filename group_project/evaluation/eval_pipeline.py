@@ -1,179 +1,262 @@
-"""
-RAG Evaluation Pipeline (Role 4 - QA/Tester).
+"""RAGAS evaluation và A/B test cho chatbot Luật Lao động."""
 
-Script này sử dụng thư viện RAGAS để tự động chấm điểm Chatbot dựa trên 15 câu hỏi
-trong `golden_dataset.json`. Kết quả sẽ được xuất ra file `results.md`.
-Đã bao gồm tính năng A/B Testing theo chuẩn yêu cầu của BTC.
-"""
+from __future__ import annotations
 
+import argparse
 import json
 import os
+import sys
 from pathlib import Path
+from typing import Any
+
 from dotenv import load_dotenv
 
-load_dotenv()
 
-GOLDEN_DATASET_PATH = Path(__file__).parent / "golden_dataset.json"
-RESULTS_PATH = Path(__file__).parent / "results.md"
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+GOLDEN_DATASET_PATH = Path(__file__).with_name("golden_dataset.json")
+RESULTS_PATH = Path(__file__).with_name("results.md")
+METRICS = ("faithfulness", "answer_relevancy", "context_recall", "context_precision")
+CONFIGS: dict[str, dict[str, bool]] = {
+    "Config A (Hybrid + Reranking)": {
+        "use_semantic": True,
+        "use_lexical": True,
+        "use_reranking": True,
+        "use_fallback": False,
+    },
+    "Config B (Lexical Only)": {
+        "use_semantic": False,
+        "use_lexical": True,
+        "use_reranking": False,
+        "use_fallback": False,
+    },
+}
+
+load_dotenv(PROJECT_ROOT / ".env")
 
 
-def load_golden_dataset() -> list[dict]:
-    """Load golden dataset từ JSON file."""
-    with open(GOLDEN_DATASET_PATH, "r", encoding="utf-8") as f:
-        return json.load(f)
+def load_golden_dataset(limit: int | None = None) -> list[dict[str, str]]:
+    """Đọc và kiểm tra schema của golden dataset."""
+
+    data = json.loads(GOLDEN_DATASET_PATH.read_text(encoding="utf-8"))
+    if not isinstance(data, list) or len(data) < 15:
+        raise ValueError("Golden dataset phải chứa ít nhất 15 mẫu.")
+
+    required = {"question", "expected_answer", "expected_context"}
+    for index, item in enumerate(data, 1):
+        if not isinstance(item, dict) or not required.issubset(item):
+            raise ValueError(f"Mẫu {index} thiếu trường bắt buộc: {sorted(required)}")
+        if any(not str(item[key]).strip() for key in required):
+            raise ValueError(f"Mẫu {index} có giá trị rỗng.")
+
+    if limit is not None:
+        if limit <= 0:
+            raise ValueError("limit phải là số nguyên dương.")
+        return data[:limit]
+    return data
 
 
-def evaluate_with_ragas(rag_pipeline, golden_dataset: list[dict], config: dict = None):
-    """
-    Evaluate RAG pipeline sử dụng RAGAS và OpenAI.
-    """
+def _ragas_dependencies() -> tuple[Any, ...]:
     try:
+        from datasets import Dataset
+        from langchain_openai import ChatOpenAI, OpenAIEmbeddings
         from ragas import evaluate
         from ragas.metrics import (
-            faithfulness,
             answer_relevancy,
-            context_recall,
             context_precision,
+            context_recall,
+            faithfulness,
         )
-        from datasets import Dataset
-        from langchain_openai.chat_models import ChatOpenAI
-        from langchain_openai.embeddings import OpenAIEmbeddings
-    except ImportError:
-        print("⚠️ Thiếu thư viện. Vui lòng chạy: pip install ragas datasets langchain-openai")
-        return None
+    except ImportError as exc:
+        raise RuntimeError(
+            "Thiếu dependency evaluation. Hãy tạo môi trường riêng và cài "
+            "requirements-eval.txt."
+        ) from exc
 
-    # Khởi tạo mô hình đánh giá (LLM-as-a-judge)
-    api_key = os.getenv("OPENAI_API_KEY")
-    if not api_key:
-        print("⚠️ CẢNH BÁO: Không tìm thấy OPENAI_API_KEY trong .env. RAGAS sẽ không thể chấm điểm.")
-        return None
-
-    eval_llm = ChatOpenAI(model="gpt-4o-mini", api_key=api_key)
-    eval_embeddings = OpenAIEmbeddings(api_key=api_key)
-
-    eval_data = {"question": [], "answer": [], "contexts": [], "ground_truth": []}
-
-    for i, item in enumerate(golden_dataset):
-        try:
-            # Truyền config vào pipeline (để test A/B)
-            if hasattr(rag_pipeline, "generate_with_citation"):
-                result = rag_pipeline.generate_with_citation(item["question"], config=config)
-            else:
-                result = {"answer": "Chưa có pipeline", "sources": [{"content": "Chưa có"}]}
-                
-            eval_data["question"].append(item["question"])
-            eval_data["answer"].append(result["answer"])
-            eval_data["contexts"].append([c.get("content", "") for c in result.get("sources", [])])
-            eval_data["ground_truth"].append(item["expected_answer"])
-        except Exception as e:
-            print(f"  ❌ Lỗi ở câu {i+1}: {e}")
-
-    dataset = Dataset.from_dict(eval_data)
-    
-    try:
-        result = evaluate(
-            dataset,
-            metrics=[faithfulness, answer_relevancy, context_recall, context_precision],
-            llm=eval_llm,
-            embeddings=eval_embeddings,
-        )
-        return result.to_pandas()
-    except Exception as e:
-        print(f"❌ Lỗi khi RAGAS chấm điểm: {e}")
-        return None
+    return (
+        Dataset,
+        ChatOpenAI,
+        OpenAIEmbeddings,
+        evaluate,
+        faithfulness,
+        answer_relevancy,
+        context_recall,
+        context_precision,
+    )
 
 
-def compare_configs(rag_pipeline, golden_dataset: list[dict]):
-    """
-    So sánh A/B giữa 2 configs:
-    - Config A: Hybrid Search + Reranking (Mặc định)
-    - Config B: Chỉ dùng BM25 (Lexical Only)
-    """
-    print("\n" + "="*50)
-    print("🚀 BẮT ĐẦU CHẠY A/B TESTING...")
-    print("="*50)
+def _collect_answers(
+    rag_pipeline: Any,
+    golden_dataset: list[dict[str, str]],
+    config: dict[str, bool],
+    top_k: int,
+) -> dict[str, list[Any]]:
+    if rag_pipeline is None or not hasattr(rag_pipeline, "generate_with_citation"):
+        raise RuntimeError("Không tìm thấy Task 10 generation pipeline.")
 
-    configs = {
-        "Config A (Hybrid + Reranking)": {"use_semantic": True, "use_lexical": True, "use_reranking": True},
-        "Config B (Lexical Only)": {"use_semantic": False, "use_lexical": True, "use_reranking": False},
+    rows: dict[str, list[Any]] = {
+        "question": [],
+        "answer": [],
+        "contexts": [],
+        "ground_truth": [],
     }
+    for index, item in enumerate(golden_dataset, 1):
+        print(f"  [{index:02d}/{len(golden_dataset):02d}] {item['question'][:70]}")
+        result = rag_pipeline.generate_with_citation(
+            item["question"],
+            top_k=top_k,
+            config=config,
+        )
+        sources = result.get("sources") or []
+        contexts = [str(source.get("content") or "") for source in sources]
+        if not contexts:
+            contexts = ["Không truy xuất được bằng chứng từ corpus hiện có."]
 
-    results = {}
-    for config_name, params in configs.items():
-        print(f"\n⏳ Đang chạy đánh giá cho: {config_name}")
-        df_result = evaluate_with_ragas(rag_pipeline, golden_dataset, config=params)
-        results[config_name] = df_result
-        if df_result is not None:
-            print(f"✅ Xong {config_name}")
+        rows["question"].append(item["question"])
+        rows["answer"].append(str(result.get("answer") or ""))
+        rows["contexts"].append(contexts)
+        rows["ground_truth"].append(item["expected_answer"])
+    return rows
 
+
+def evaluate_with_ragas(
+    rag_pipeline: Any,
+    golden_dataset: list[dict[str, str]],
+    config: dict[str, bool],
+    top_k: int = 5,
+):
+    """Sinh câu trả lời và chấm bốn metric bằng RAGAS 0.1.x."""
+
+    if not os.getenv("OPENAI_API_KEY", "").strip():
+        raise RuntimeError("Thiếu OPENAI_API_KEY cho RAGAS LLM-as-a-judge.")
+
+    (
+        Dataset,
+        ChatOpenAI,
+        OpenAIEmbeddings,
+        evaluate,
+        faithfulness,
+        answer_relevancy,
+        context_recall,
+        context_precision,
+    ) = _ragas_dependencies()
+
+    rows = _collect_answers(rag_pipeline, golden_dataset, config, top_k)
+    dataset = Dataset.from_dict(rows)
+    judge_model = os.getenv("EVAL_OPENAI_MODEL", "gpt-4o-mini").strip()
+    eval_llm = ChatOpenAI(model=judge_model, temperature=0)
+    eval_embeddings = OpenAIEmbeddings()
+    result = evaluate(
+        dataset,
+        metrics=[faithfulness, answer_relevancy, context_recall, context_precision],
+        llm=eval_llm,
+        embeddings=eval_embeddings,
+    )
+    return result.to_pandas()
+
+
+def compare_configs(
+    rag_pipeline: Any,
+    golden_dataset: list[dict[str, str]],
+    top_k: int = 5,
+) -> dict[str, Any]:
+    """Chạy A/B giữa hybrid + RRF và lexical-only."""
+
+    results: dict[str, Any] = {}
+    for name, config in CONFIGS.items():
+        print(f"\n=== {name} ===")
+        results[name] = evaluate_with_ragas(
+            rag_pipeline,
+            golden_dataset,
+            config=config,
+            top_k=top_k,
+        )
     return results
 
 
-def export_results(ab_results: dict):
-    """Xuất báo cáo So sánh A/B ra file Markdown"""
-    if not ab_results:
-        print("❌ Không có dữ liệu để xuất báo cáo!")
-        return
+def _mean_scores(frame: Any) -> dict[str, float]:
+    return {metric: float(frame[metric].mean()) for metric in METRICS}
 
-    content = "# 📊 Báo Cáo Đánh Giá Chất Lượng RAG & A/B Testing\n\n"
-    content += "> *Đánh giá tự động bằng RAGAS trên 15 câu hỏi vàng (Chính sách Thương mại điện tử Shopee).*\n\n"
-    
-    content += "## 1. Kết Quả A/B Testing (Overall Scores)\n\n"
-    content += "| Tiêu chí (Metric) | Config A (Hybrid+Reranking) | Config B (Lexical Only) |\n"
-    content += "|-------------------|----------------------------|------------------------|\n"
 
-    # Trích xuất điểm của Config A và B
-    scores_A = ab_results.get("Config A (Hybrid + Reranking)")
-    scores_B = ab_results.get("Config B (Lexical Only)")
-    
-    mean_A = scores_A[['faithfulness', 'answer_relevancy', 'context_recall', 'context_precision']].mean() if scores_A is not None else {}
-    mean_B = scores_B[['faithfulness', 'answer_relevancy', 'context_recall', 'context_precision']].mean() if scores_B is not None else {}
+def export_results(ab_results: dict[str, Any], sample_count: int) -> None:
+    """Ghi báo cáo điểm, worst performers và khuyến nghị."""
 
-    metrics = [
-        ("Faithfulness (Không bịa luật)", 'faithfulness'),
-        ("Answer Relevancy (Đúng trọng tâm)", 'answer_relevancy'),
-        ("Context Recall (Lấy đủ thông tin)", 'context_recall'),
-        ("Context Precision (Không bị rác)", 'context_precision')
+    config_a = ab_results["Config A (Hybrid + Reranking)"]
+    config_b = ab_results["Config B (Lexical Only)"]
+    mean_a = _mean_scores(config_a)
+    mean_b = _mean_scores(config_b)
+
+    lines = [
+        "# Báo cáo đánh giá RAG và A/B testing",
+        "",
+        f"> RAGAS chấm {sample_count} câu hỏi vàng về Luật Lao động Việt Nam.",
+        "",
+        "## Điểm tổng quan",
+        "",
+        "| Metric | Hybrid + Reranking | Lexical only | Chênh lệch A-B |",
+        "|---|---:|---:|---:|",
     ]
+    labels = {
+        "faithfulness": "Faithfulness",
+        "answer_relevancy": "Answer relevancy",
+        "context_recall": "Context recall",
+        "context_precision": "Context precision",
+    }
+    for metric in METRICS:
+        delta = mean_a[metric] - mean_b[metric]
+        lines.append(
+            f"| {labels[metric]} | {mean_a[metric]:.3f} | "
+            f"{mean_b[metric]:.3f} | {delta:+.3f} |"
+        )
 
-    for label, key in metrics:
-        val_a = f"`{mean_A.get(key, 0):.3f}`" if mean_A else "`N/A`"
-        val_b = f"`{mean_B.get(key, 0):.3f}`" if mean_B else "`N/A`"
-        content += f"| **{label}** | {val_a} | {val_b} |\n"
+    lines.extend(["", "## Worst performers của Hybrid + Reranking", ""])
+    worst = config_a.assign(
+        aggregate_score=config_a[list(METRICS)].mean(axis=1)
+    ).sort_values("aggregate_score").head(3)
+    for _, row in worst.iterrows():
+        lines.extend(
+            [
+                f"### {row['question']}",
+                "",
+                f"- Điểm tổng hợp: `{row['aggregate_score']:.3f}`",
+                f"- Faithfulness: `{row['faithfulness']:.3f}`",
+                f"- Đáp án chuẩn: {row['ground_truth']}",
+                f"- Chatbot: {row['answer']}",
+                "",
+            ]
+        )
 
-    content += "\n## 2. Phân Tích Worst Performers (Từ Config A)\n\n"
-    
-    if scores_A is not None and not scores_A.empty:
-        worst_cases = scores_A.sort_values(by='faithfulness', ascending=True).head(3)
-        for idx, row in worst_cases.iterrows():
-            content += f"### Câu hỏi: {row['question']}\n"
-            content += f"- **Điểm Faithfulness:** `{row.get('faithfulness', 0):.2f}`\n"
-            content += f"- **Đáp án chuẩn:** {row['ground_truth']}\n"
-            content += f"- **Bot trả lời:** {row['answer']}\n"
-            content += "---\n\n"
-    
-    content += "## 3. Đề Xuất Cải Tiến (Recommendations)\n"
-    content += "- **Dựa trên A/B Test:** Cấu hình Hybrid + Reranking thường cho kết quả Recall tốt hơn vì nó kết hợp được cả ngữ nghĩa lẫn từ khóa chính xác.\n"
-    content += "- **Cải thiện Faithfulness:** Cần tinh chỉnh lại Prompt ở Task 10 để ép LLM từ chối trả lời nếu không tìm thấy thông tin trong Context, thay vì cố gắng tự bịa ra.\n"
+    better = "Hybrid + Reranking" if sum(mean_a.values()) >= sum(mean_b.values()) else "Lexical only"
+    lines.extend(
+        [
+            "## Kết luận và đề xuất",
+            "",
+            f"- Cấu hình có tổng điểm trung bình tốt hơn: **{better}**.",
+            "- Bổ sung văn bản nguồn chính thức cho các câu có context recall thấp.",
+            "- Giữ cơ chế từ chối khi evidence rỗng và kiểm tra citation trước khi hiển thị.",
+            "- Xem lại chunking quanh ranh giới Điều/Khoản ở các worst performers.",
+            "",
+        ]
+    )
+    RESULTS_PATH.write_text("\n".join(lines), encoding="utf-8")
+    print(f"\nĐã ghi báo cáo: {RESULTS_PATH}")
 
-    RESULTS_PATH.write_text(content, encoding="utf-8")
-    print(f"\n✅ Đã xuất báo cáo đánh giá A/B thành công tại: {RESULTS_PATH.name}")
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--limit", type=int, help="Chỉ chạy N mẫu để smoke test.")
+    parser.add_argument("--top-k", type=int, default=5)
+    args = parser.parse_args()
+    if args.top_k <= 0:
+        parser.error("--top-k phải là số nguyên dương")
+
+    sys.path.insert(0, str(PROJECT_ROOT))
+    from src import task10_generation as pipeline
+
+    golden_dataset = load_golden_dataset(limit=args.limit)
+    print(f"Đã tải {len(golden_dataset)} câu hỏi Luật Lao động.")
+    results = compare_configs(pipeline, golden_dataset, top_k=args.top_k)
+    export_results(results, sample_count=len(golden_dataset))
 
 
 if __name__ == "__main__":
-    golden_dataset = load_golden_dataset()
-    print(f"📚 Đã tải thành công {len(golden_dataset)} câu hỏi Chính sách TMĐT từ golden_dataset.json\n")
-
-    try:
-        import sys
-        sys.path.insert(0, str(Path(__file__).parent.parent.parent))
-        from src import task10_generation as pipeline
-    except ImportError:
-        print("⚠️ Chưa có file pipeline Task 10, chạy ở chế độ giả lập.")
-        pipeline = None
-
-    # Chạy A/B Testing
-    ab_results = compare_configs(pipeline, golden_dataset)
-    
-    # Xuất file báo cáo tổng hợp
-    export_results(ab_results)
+    main()

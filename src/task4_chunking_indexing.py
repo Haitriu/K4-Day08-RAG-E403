@@ -12,14 +12,11 @@ Chunking options (langchain-text-splitters):
     - MarkdownHeaderTextSplitter: tốt cho file có heading
     - SemanticChunker: dùng embedding để tách (nâng cao)
 
-Embedding model options (chọn 1, cân nhắc đánh đổi cài đặt nặng vs cần API key):
-    - sentence-transformers/all-MiniLM-L6-v2 hoặc BAAI/bge-m3 — chạy local, không
-      cần API key, nhưng cài nặng (~1-2GB vì kéo theo torch)
-    - Google models/text-embedding-004 (768 dim) — nhẹ, cần GEMINI_API_KEY
-    - OpenAI text-embedding-3-small (1536 dim) — nhẹ, cần OPENAI_API_KEY
-    Gợi ý: đọc EMBEDDING_PROVIDER từ .env (os.getenv("EMBEDDING_PROVIDER", "sentence_transformers"))
-    để cả nhóm có thể đổi provider mà không sửa code — nhớ đổi provider phải xoá
-    chroma_db/ cũ và reindex vì dimension khác nhau (1024/768/1536) không tương thích ngược.
+Embedding model:
+    - Mặc định: paraphrase-multilingual-MiniLM-L12-v2 (384 chiều), chạy local,
+      hỗ trợ tiếng Việt và đủ nhẹ cho demo CPU.
+    - Có thể đổi bằng EMBEDDING_MODEL/EMBEDDING_DIM. Khi đổi model phải tạo lại
+      chroma_db vì vector khác dimension hoặc không còn cùng không gian biểu diễn.
 
 Vector store options:
     - ChromaDB (khuyến cáo: đơn giản, local persistent, không cần Docker)
@@ -34,7 +31,12 @@ chroma_db/ cũ trước khi reindex — nếu không, chunk cũ và mới sẽ t
 trong cùng collection, retrieval sẽ trả về kết quả rác từ dữ liệu cũ.
 """
 
+import os
 from pathlib import Path
+
+from dotenv import load_dotenv
+
+load_dotenv()
 
 STANDARDIZED_DIR = Path(__file__).parent.parent / "data" / "standardized"
 CHROMA_DIR = Path(__file__).parent.parent / "chroma_db"
@@ -51,10 +53,13 @@ CHUNK_SIZE = 800        # 800 ký tự ~ đủ chứa 1-2 điều luật ngắn,
 CHUNK_OVERLAP = 100     # 100 ký tự (12.5% size) đủ để không cắt đứt ý ở ranh giới chunk
 CHUNKING_METHOD = "recursive"  # "recursive" | "markdown_header" | "semantic"
 
-# Embedding: BAAI/bge-m3 — multilingual, chất lượng tốt cho tiếng Việt (đặc biệt
-# văn bản pháp luật nhiều thuật ngữ Hán-Việt), chạy local không cần API key.
-EMBEDDING_MODEL = "BAAI/bge-m3"
-EMBEDDING_DIM = 1024
+# Embedding local multilingual. Model MiniLM nhỏ hơn đáng kể so với BGE-M3 nên
+# phù hợp máy demo CPU nhưng vẫn hỗ trợ tiếng Việt. Có thể override bằng .env.
+EMBEDDING_MODEL = os.getenv(
+    "EMBEDDING_MODEL",
+    "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
+)
+EMBEDDING_DIM = int(os.getenv("EMBEDDING_DIM", "384"))
 
 # Vector store: ChromaDB — persistent local, không cần Docker, đủ cho quy mô lab.
 VECTOR_STORE = "chromadb"  # "chromadb" | "weaviate" | "faiss"
@@ -118,7 +123,15 @@ def get_embedding_model():
     global _model_cache
     if _model_cache is None:
         from sentence_transformers import SentenceTransformer
-        _model_cache = SentenceTransformer(EMBEDDING_MODEL)
+        local_only = os.getenv("EMBEDDING_LOCAL_FILES_ONLY", "true").lower() in {
+            "1",
+            "true",
+            "yes",
+        }
+        _model_cache = SentenceTransformer(
+            EMBEDDING_MODEL,
+            local_files_only=local_only,
+        )
     return _model_cache
 
 
@@ -190,16 +203,16 @@ def run_pipeline():
     print("=" * 50)
 
     docs = load_documents()
-    print(f"\n✓ Loaded {len(docs)} documents")
+    print(f"\n[OK] Loaded {len(docs)} documents")
 
     chunks = chunk_documents(docs)
-    print(f"✓ Created {len(chunks)} chunks")
+    print(f"[OK] Created {len(chunks)} chunks")
 
     chunks = embed_chunks(chunks)
-    print(f"✓ Embedded {len(chunks)} chunks")
+    print(f"[OK] Embedded {len(chunks)} chunks")
 
     index_to_vectorstore(chunks)
-    print("✓ Indexed to vector store")
+    print("[OK] Indexed to vector store")
 
 
 if __name__ == "__main__":

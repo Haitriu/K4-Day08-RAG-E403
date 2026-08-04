@@ -1,105 +1,85 @@
-# Bài Tập Nhóm — E-commerce Support RAG Chatbot
+# Trợ lý Pháp luật Lao động Việt Nam
 
-## Mục Tiêu
+## Mục tiêu
 
-Sau khi hoàn thành bài cá nhân, nhóm ngồi lại để xây dựng **1 trong 2 sản phẩm**:
+Chatbot RAG trả lời câu hỏi phổ biến về pháp luật lao động Việt Nam, chỉ dựa trên
+nguồn đã truy xuất và hiển thị trích dẫn đi kèm. Nội dung chỉ có tính chất tham
+khảo, không thay thế tư vấn pháp lý chính thức.
 
----
+## Kiến trúc
 
-## Yêu cầu 1: Sản phẩm nhóm RAG Chatbot
-
-Xây dựng chatbot trả lời câu hỏi về chính sách thương mại điện tử và hỗ trợ khách hàng liên quan.
-
-**Yêu cầu:**
-- Giao diện chat (Streamlit / Gradio / Chainlit)
-- Trả lời có citation (dựa trên Task 10)
-- Hỗ trợ follow-up questions (conversation memory)
-- Hiển thị source documents đã dùng
-
-**Stack gợi ý:**
-```
-Chainlit/Streamlit → Retrieval (Task 9) → Generation (Task 10) → Display
-```
-
----
-
-## Yêu cầu 2: RAG Evaluation Pipeline
-
-Sử dụng **1 trong 3 framework** sau để evaluate pipeline RAG của nhóm:
-
-### Framework lựa chọn
-
-| Framework | Cài đặt | Đặc điểm |
-|-----------|---------|-----------|
-| [DeepEval](https://github.com/confident-ai/deepeval) | `pip install deepeval` | Nhiều metric built-in, dễ integrate với pytest |
-| [RAGAS](https://github.com/explodinggradients/ragas) | `pip install ragas` | Chuẩn industry cho RAG eval, 3 trục chính |
-| [TruLens](https://github.com/truera/trulens) | `pip install trulens` | Dashboard UI, feedback functions mạnh |
-
-### Yêu cầu Evaluation
-
-1. **Tạo Golden Dataset** — tối thiểu 15 cặp Q&A (question, expected_answer, expected_context)
-2. **Chạy evaluation** trên toàn bộ golden dataset với các metrics sau:
-   - **Faithfulness** — câu trả lời có bám đúng context không?
-   - **Answer Relevance** — câu trả lời có đúng câu hỏi không?
-   - **Context Recall** — retriever có lấy đủ evidence không?
-   - **Context Precision** — trong context lấy về, bao nhiêu % thực sự hữu ích?
-3. **So sánh A/B** — chạy eval trên ít nhất 2 config khác nhau (ví dụ: có reranking vs không reranking, hoặc hybrid vs dense-only)
-4. **Báo cáo** — bảng điểm + phân tích worst performers + đề xuất cải tiến
-
-Xem code mẫu (DeepEval/RAGAS/TruLens) chi tiết trong `README.md` gốc mục "Yêu cầu 2".
-
-### Deliverable Evaluation
-
-- [ ] File `group_project/evaluation/golden_dataset.json` — 15+ cặp Q&A
-- [ ] File `group_project/evaluation/eval_pipeline.py` — script chạy evaluation
-- [ ] File `group_project/evaluation/results.md` — bảng điểm + phân tích
-- [ ] So sánh A/B ít nhất 2 configs
-
----
-
-## Yêu Cầu Chung
-
-1. **Tích hợp pipeline** từ bài cá nhân của các thành viên
-2. **Demo hoạt động được** trong buổi trình bày (chạy local hoặc deploy)
-3. **Evaluation pipeline** chạy được và có báo cáo kết quả
-4. **Code push lên repository** chung của nhóm
-5. **README** mô tả kiến trúc và phân công (điền bên dưới)
-
----
-
-## Kiến Trúc Hệ Thống
-
-```
-[Vẽ diagram kiến trúc ở đây]
+```text
+PDF + bài viết đã crawl
+        │
+        ▼
+Markdown chuẩn hóa → chunking → multilingual embeddings → ChromaDB
+                                      │
+Câu hỏi → Semantic Search ────────────┤
+        → BM25 Lexical Search ────────┼→ RRF reranking → Task 10 + LLM
+                                      │                         │
+                                      └→ PageIndex fallback ────┘
+                                                                │
+                                                                ▼
+                                              Streamlit + citation + sources
 ```
 
----
+`supervisor.py` là điểm vào dùng chung cho CLI; `app.py` là giao diện demo.
+PageIndex chỉ được dùng khi hybrid retrieval không có bằng chứng đủ mạnh và đã
+cấu hình tài liệu trên dịch vụ PageIndex.
 
-## Phân Công Công Việc
+## Phân công
 
-| Thành viên | MSSV | Nhiệm vụ | Trạng thái |
-|-----------|------|----------|------------|
-| Vũ Bảo Khánh* | 2A202601122 | Team Leader & RAG Architect (Ghép code tổng hợp, Code Task 6, 7, 8, 9) | Hoàn thành |
-| Võ Hồ Nhật Nam | 2A202601700 | Data & Retrieval Specialist (Thu thập dữ liệu, Convert Markdown, Code Task 1-5) | Hoàn thành |
-| Nguyễn Xuân Hải | 2A202602022 | Frontend & Chatbot Developer (Dựng Streamlit app.py, Code Task 10 LLM Generation) | Hoàn thành |
-| Phạm Đức Hải Triều | 2A202601980 | Evaluation & QA Engineer (Tạo golden_dataset, chạy RAGAS eval, viết báo cáo) | Hoàn thành |
+| Thành viên | MSSV | Vai trò | Phạm vi | Trạng thái |
+|---|---|---|---|---|
+| Vũ Bảo Khánh | 2A202601122 | Team Leader & RAG Architect | Điều phối, Task 6–9, ghép pipeline và supervisor | Hoàn thành code |
+| Võ Hồ Nhật Nam | 2A202601700 | Data & Retrieval Specialist | Task 1–5: thu thập, chuẩn hóa, chunking, ChromaDB, semantic search | Hoàn thành |
+| Nguyễn Xuân Hải | 2A202602022 | Frontend & Chatbot Developer | Task 10, prompt/citation, lost-in-the-middle, Streamlit UI | Hoàn thành |
+| Phạm Đức Hải Triều | 2A202601980 | Evaluation & QA Engineer | Golden dataset, RAGAS, A/B test và báo cáo | Hoàn thành code; chờ live eval |
 
----
+## Chạy dự án
 
-## Hướng Dẫn Chạy
-
-```bash
-# Cài đặt dependencies
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
-
-# Chạy app
-streamlit run app.py
-# hoặc
-chainlit run app.py
+Copy-Item .env.example .env
 ```
 
----
+Tạo vector store ở lần chạy đầu:
 
-## Lưu ý
+```powershell
+python -m src.task4_chunking_indexing
+```
 
-Hãy giữ lại repo này nếu như bạn học track 3 giai đoạn 2, chúng ta sẽ phát triển tiếp dự án lên knowledge graph để khắc phục các câu hỏi hóc búa khi có các câu hỏi khó.
+Chạy CLI retrieval hoặc chatbot:
+
+```powershell
+python supervisor.py "Thời gian thử việc tối đa là bao lâu?" --retrieve-only
+streamlit run app.py
+```
+
+Các biến môi trường chính:
+
+- `OPENROUTER_API_KEY` hoặc `OPENAI_API_KEY`: sinh câu trả lời.
+- `OPENROUTER_MODEL`, `OPENAI_MODEL`: tùy chọn model.
+- `EMBEDDING_MODEL`: mặc định `sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2`.
+- `PAGEINDEX_API_KEY`: chỉ cần khi bật fallback PageIndex sau khi upload corpus.
+
+## Evaluation
+
+`evaluation/golden_dataset.json` có 15 câu hỏi Luật Lao động. Chạy RAGAS trong
+môi trường evaluation riêng theo hướng dẫn trong `requirements-eval.txt`, sau đó:
+
+```powershell
+python group_project/evaluation/eval_pipeline.py
+```
+
+Script so sánh hai cấu hình: Hybrid + RRF và BM25-only, chấm bốn metric RAGAS,
+ghi bảng điểm và ba trường hợp kém nhất vào `evaluation/results.md`.
+
+## Kiểm thử
+
+```powershell
+python -m pytest -q
+python -m py_compile app.py supervisor.py src\task*.py group_project\evaluation\eval_pipeline.py
+```

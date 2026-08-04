@@ -3,10 +3,11 @@
 from __future__ import annotations
 
 import os
+import re
 from typing import Any, Literal, TypedDict
 
 from dotenv import load_dotenv
-from openai import OpenAI, RateLimitError
+from openai import NotFoundError, OpenAI, RateLimitError
 
 from .task9_retrieval_pipeline import retrieve
 
@@ -98,17 +99,16 @@ def format_context(chunks: list[dict[str, Any]]) -> str:
             metadata.get("effective_date"),
             metadata.get("date"),
         )
+        if not year and source_file:
+            year_match = re.search(r"(?:19|20)\d{2}", source_file)
+            year = year_match.group(0) if year_match else ""
         article = _first_text(metadata.get("article"), metadata.get("section"))
         document_number = _first_text(metadata.get("document_number"))
         document_type = _first_text(metadata.get("type"), "legal")
         content = _first_text(chunk.get("content"))
 
         citation = f"[{title}, {year}]" if year else f"[{title}]"
-        attributes = [
-            f"Tài liệu {index}",
-            f"Trích dẫn: {citation}",
-            f"Loại: {document_type}",
-        ]
+        attributes = [f"Loại: {document_type}"]
         if source_file:
             attributes.append(f"Tệp nguồn: {source_file}")
         if document_number:
@@ -116,7 +116,12 @@ def format_context(chunks: list[dict[str, Any]]) -> str:
         if article:
             attributes.append(f"Điều/khoản: {article}")
 
-        context_parts.append(f"[{' | '.join(attributes)}]\n{content}")
+        context_parts.append(
+            f"TÀI LIỆU {index}\n"
+            f"Trích dẫn bắt buộc: {citation}\n"
+            f"{' | '.join(attributes)}\n"
+            f"Nội dung: {content}"
+        )
 
     return "\n\n---\n\n".join(context_parts)
 
@@ -150,7 +155,7 @@ def _call_llm(
             temperature=TEMPERATURE,
             top_p=TOP_P,
         )
-    except RateLimitError:
+    except (RateLimitError, NotFoundError):
         raise
     except Exception as exc:
         raise RuntimeError(
@@ -174,16 +179,19 @@ def _generate_answer(user_message: str) -> str:
         try:
             return _call_llm(
                 api_key=openrouter_key,
-                model=_model_from_env("OPENROUTER_MODEL", OPENROUTER_MODEL),
+                model=_model_from_env(
+                    "OPENROUTER_MODEL",
+                    os.getenv("LLM_MODEL", "").strip() or OPENROUTER_MODEL,
+                ),
                 provider_name="OpenRouter",
                 user_message=user_message,
                 base_url=OPENROUTER_BASE_URL,
             )
-        except RateLimitError as exc:
+        except (RateLimitError, NotFoundError) as exc:
             if not openai_key:
                 raise RuntimeError(
-                    "OpenRouter đang giới hạn số lượt gọi và chưa cấu hình "
-                    "OPENAI_API_KEY để fallback."
+                    "OpenRouter đang giới hạn lượt gọi hoặc model không khả dụng, "
+                    "và chưa cấu hình OPENAI_API_KEY để fallback."
                 ) from exc
 
     if openai_key:
@@ -207,7 +215,11 @@ def _refusal_result() -> GenerationResult:
     }
 
 
-def generate_with_citation(query: str, top_k: int = TOP_K) -> GenerationResult:
+def generate_with_citation(
+    query: str,
+    top_k: int = TOP_K,
+    config: dict[str, bool] | None = None,
+) -> GenerationResult:
     """Chạy retrieval, sắp context và sinh câu trả lời có citation."""
 
     if not isinstance(query, str) or not query.strip():
@@ -217,7 +229,7 @@ def generate_with_citation(query: str, top_k: int = TOP_K) -> GenerationResult:
 
     clean_query = query.strip()
     try:
-        retrieved = retrieve(clean_query, top_k=top_k)
+        retrieved = retrieve(clean_query, top_k=top_k, config=config)
     except NotImplementedError:
         # Cho phép UI và test Task 10 hoạt động độc lập trong khi Task 9 đang ghép.
         return _refusal_result()
@@ -233,7 +245,18 @@ def generate_with_citation(query: str, top_k: int = TOP_K) -> GenerationResult:
     if not chunks:
         return _refusal_result()
 
-    reordered = reorder_for_llm(chunks)
+    # Ưu tiên văn bản quy phạm pháp luật trước bài giải thích thứ cấp trong
+    # context của LLM. Thứ tự relevance gốc vẫn được giữ nguyên khi trả về UI.
+    authority_ordered = sorted(
+        chunks,
+        key=lambda chunk: (
+            0
+            if str((chunk.get("metadata") or {}).get("type", "")).lower()
+            == "legal"
+            else 1
+        ),
+    )
+    reordered = reorder_for_llm(authority_ordered)
     context = format_context(reordered)
     user_message = (
         f"CONTEXT PHÁP LÝ:\n{context}\n\n"

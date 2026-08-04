@@ -1,1 +1,1 @@
-"""Day 8 — RAG Pipeline v2: Chính sách thương mại điện tử & hỗ trợ khách hàng (E-commerce Support)."""
+"""Day 8 — RAG Pipeline v2: Trợ lý Pháp luật Lao động Việt Nam."""
