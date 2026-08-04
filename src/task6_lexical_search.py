@@ -2,18 +2,43 @@
 Vũ Bảo Khánh hoàn thiện (Role 1 - RAG Architect).
 
 Task 6 — Lexical Search Module (BM25).
-Mô-đun tìm kiếm dựa trên từ khóa truyền thống (Keyword Search).
-Sử dụng thư viện rank_bm25 để đánh giá mức độ xuất hiện của từ khóa.
+
+Mặc định sử dụng BM25. Nếu dùng phương pháp khác (TF-IDF, Elasticsearch,
+Weaviate BM25 built-in), hãy giải thích cơ chế trong buổi demo → +5 bonus.
+
+Cài đặt:
+    pip install rank-bm25
+
+BM25 hoạt động thế nào:
+    - Term Frequency (TF): từ xuất hiện nhiều trong document → điểm cao
+    - Inverse Document Frequency (IDF): từ hiếm → quan trọng hơn
+    - Document length normalization: document dài không bị ưu tiên quá mức
+    - Formula: score(q,d) = Σ IDF(qi) * (tf(qi,d) * (k1+1)) / (tf(qi,d) + k1*(1-b+b*|d|/avgdl))
+    - k1=1.5 (term saturation), b=0.75 (length normalization)
+
+Corpus: nạp trực tiếp từ ChromaDB (cùng các chunk đã index ở Task 4), nhờ vậy
+BM25 và semantic search luôn tìm trên đúng cùng một tập chunk — không cần ai
+phải tự gọi build_bm25_index(corpus) thủ công trước khi dùng lexical_search().
 """
 
-from rank_bm25 import BM25Okapi
-import numpy as np
-from pathlib import Path
-import json
+CORPUS: list[dict] = []  # List of {'content': str, 'metadata': dict} — nạp lười (lazy) khi cần
 
-# Cố gắng load corpus từ file chunk đã lưu (Nếu Nam - Role 2 đã làm xong Task 4)
-CORPUS = []
-BM25_INDEX = None
+_bm25_cache = None
+_corpus_cache: list[dict] = []
+
+
+def _load_corpus() -> list[dict]:
+    """Nạp toàn bộ chunk đã index ở Task 4 từ ChromaDB làm corpus cho BM25."""
+    from src.task4_chunking_indexing import get_collection
+
+    collection = get_collection()
+    data = collection.get(include=["documents", "metadatas"])
+
+    corpus = []
+    for doc, meta in zip(data["documents"], data["metadatas"]):
+        corpus.append({"content": doc, "metadata": meta})
+    return corpus
+
 
 def build_bm25_index(corpus: list[dict]):
     """
@@ -22,17 +47,24 @@ def build_bm25_index(corpus: list[dict]):
     Args:
         corpus: List of {'content': str, 'metadata': dict}
     """
-    global CORPUS, BM25_INDEX
-    CORPUS = corpus
-    
-    if not CORPUS:
-        print("⚠️ CẢNH BÁO: Corpus rỗng, BM25 Index không được tạo.")
-        return None
+    from rank_bm25 import BM25Okapi
 
-    # Tokenize: Tách từ cơ bản bằng khoảng trắng và đưa về in thường
-    tokenized_corpus = [doc.get("content", "").lower().split() for doc in CORPUS]
-    BM25_INDEX = BM25Okapi(tokenized_corpus)
-    return BM25_INDEX
+    tokenized_corpus = [doc["content"].lower().split() for doc in corpus]
+    return BM25Okapi(tokenized_corpus)
+
+
+def _get_bm25():
+    """Cache BM25 index + corpus để không rebuild mỗi lần gọi lexical_search."""
+    global _bm25_cache, _corpus_cache
+    if _bm25_cache is None:
+        _corpus_cache = _load_corpus()
+        if not _corpus_cache:
+            raise RuntimeError(
+                "Corpus rỗng — hãy chạy `python -m src.task4_chunking_indexing` trước "
+                "để index dữ liệu vào ChromaDB."
+            )
+        _bm25_cache = build_bm25_index(_corpus_cache)
+    return _bm25_cache, _corpus_cache
 
 
 def lexical_search(query: str, top_k: int = 10) -> list[dict]:
@@ -49,36 +81,30 @@ def lexical_search(query: str, top_k: int = 10) -> list[dict]:
             'score': float,      # BM25 score
             'metadata': dict
         }
+        Sorted by score descending.
     """
-    if not BM25_INDEX or not CORPUS:
-        print("⚠️ CẢNH BÁO: BM25_INDEX chưa được khởi tạo. Hãy gọi build_bm25_index() trước.")
-        return []
+    import numpy as np
+
+    bm25, corpus = _get_bm25()
 
     tokenized_query = query.lower().split()
-    scores = BM25_INDEX.get_scores(tokenized_query)
+    scores = bm25.get_scores(tokenized_query)
 
-    # Lấy top_k kết quả có điểm cao nhất
     top_indices = np.argsort(scores)[::-1][:top_k]
 
     results = []
     for idx in top_indices:
-        if scores[idx] > 0:  # Chỉ lấy những doc có chứa từ khóa (score > 0)
+        if scores[idx] > 0:
             results.append({
-                "content": CORPUS[idx].get("content", ""),
+                "content": corpus[idx]["content"],
                 "score": float(scores[idx]),
-                "metadata": CORPUS[idx].get("metadata", {})
+                "metadata": corpus[idx]["metadata"],
             })
     return results
 
+
 if __name__ == "__main__":
-    # Test giả lập
-    mock_corpus = [
-        {"content": "Người lao động được nghỉ thai sản 6 tháng.", "metadata": {"source": "luat_ld.md"}},
-        {"content": "Công ty trả lương vào ngày mùng 5 hàng tháng.", "metadata": {"source": "noi_quy.md"}},
-        {"content": "Thời gian thử việc tối đa là 60 ngày đối với bằng đại học.", "metadata": {"source": "luat_ld.md"}},
-    ]
-    build_bm25_index(mock_corpus)
-    print("Test BM25 Search:")
-    res = lexical_search("thử việc 60 ngày", top_k=2)
-    for r in res:
-        print(f"[{r['score']:.3f}] {r['content']}")
+    # Test
+    results = lexical_search("bảo hiểm xã hội thất nghiệp", top_k=5)
+    for r in results:
+        print(f"[{r['score']:.3f}] {r['content'][:100]}...")

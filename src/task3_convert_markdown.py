@@ -17,12 +17,26 @@ Hướng dẫn:
 """
 
 import json
+import re
 from pathlib import Path
 
 from markitdown import MarkItDown
 
 LANDING_DIR = Path(__file__).parent.parent / "data" / "landing"
 OUTPUT_DIR = Path(__file__).parent.parent / "data" / "standardized"
+
+
+def _extract_legacy_doc_text(filepath: Path) -> str:
+    """Fallback cho file .doc nhị phân cũ (không phải .docx) mà MarkItDown không hỗ trợ.
+
+    File .doc (OLE Compound Document) lưu văn bản dạng UTF-16LE xen kẽ control bytes.
+    Decode toàn bộ file như UTF-16LE rồi lọc các đoạn ký tự in được liên tục
+    (bao gồm dấu tiếng Việt) — kỹ thuật "strings" cổ điển, không cần MS Word/LibreOffice.
+    """
+    data = filepath.read_bytes()
+    text = data.decode("utf-16-le", errors="ignore")
+    runs = re.findall(r"[ -~ -ỹ]{4,}", text)
+    return "\n".join(runs)
 
 
 def convert_legal_docs():
@@ -36,12 +50,18 @@ def convert_legal_docs():
     for filepath in legal_dir.iterdir():
         if filepath.suffix.lower() in (".pdf", ".docx", ".doc"):
             print(f"Converting: {filepath.name}")
-            # TODO: Convert và lưu file
-            # result = md.convert(str(filepath))
-            # output_path = output_dir / f"{filepath.stem}.md"
-            # output_path.write_text(result.text_content, encoding="utf-8")
-            # print(f"  ✓ Saved: {output_path}")
-            raise NotImplementedError("Implement convert_legal_docs")
+            try:
+                text_content = md.convert(str(filepath)).text_content
+            except Exception as e:
+                if filepath.suffix.lower() == ".doc":
+                    print(f"  ⚠ MarkItDown không hỗ trợ .doc cũ ({e.__class__.__name__}), dùng fallback extractor")
+                    text_content = _extract_legacy_doc_text(filepath)
+                else:
+                    print(f"  ✗ Bỏ qua ({e.__class__.__name__}): {e}")
+                    continue
+            output_path = output_dir / f"{filepath.stem}.md"
+            output_path.write_text(text_content, encoding="utf-8")
+            print(f"  ✓ Saved: {output_path}")
 
 
 def convert_news_articles():
@@ -53,19 +73,17 @@ def convert_news_articles():
     for filepath in news_dir.iterdir():
         if filepath.suffix.lower() == ".json":
             print(f"Converting: {filepath.name}")
-            # TODO: Đọc JSON, extract content_markdown, lưu thành .md
-            # data = json.loads(filepath.read_text(encoding="utf-8"))
-            # output_path = output_dir / f"{filepath.stem}.md"
-            #
-            # # Thêm metadata header
-            # header = f"# {data.get('title', 'Unknown')}\n\n"
-            # header += f"**Source:** {data.get('url', 'N/A')}\n"
-            # header += f"**Crawled:** {data.get('date_crawled', 'N/A')}\n\n---\n\n"
-            #
-            # content = header + data.get("content_markdown", "")
-            # output_path.write_text(content, encoding="utf-8")
-            # print(f"  ✓ Saved: {output_path}")
-            raise NotImplementedError("Implement convert_news_articles")
+            data = json.loads(filepath.read_text(encoding="utf-8"))
+            output_path = output_dir / f"{filepath.stem}.md"
+
+            # Thêm metadata header
+            header = f"# {data.get('title', 'Unknown')}\n\n"
+            header += f"**Source:** {data.get('url', 'N/A')}\n"
+            header += f"**Crawled:** {data.get('crawl_date', 'N/A')}\n\n---\n\n"
+
+            content = header + data.get("content", "")
+            output_path.write_text(content, encoding="utf-8")
+            print(f"  ✓ Saved: {output_path}")
 
 
 def convert_all():
