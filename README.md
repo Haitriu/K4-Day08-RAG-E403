@@ -575,7 +575,7 @@ run_dashboard()
 
 **4. Thành viên 4: Phạm Đức Hải Triều (2A202601980) - Evaluation & QA Engineer**
 - **Nhiệm vụ chính:** Tạo `golden_dataset.json` (15 câu hỏi), thực thi RAGAS `eval_pipeline.py` và viết `results.md`.
-- **Golden Dataset:** Tự biên soạn bộ dữ liệu 15 cặp Câu hỏi - Trả lời chuẩn về Luật Lao Động.
+- **Golden Dataset:** Tự biên soạn bộ dữ liệu 15 cặp Câu hỏi - Trả lời chuẩn về Chính sách Thương mại điện tử (Shopee).
 - **Automated Eval:** Cài đặt framework RAGAS, viết kịch bản `eval_pipeline.py` tự động đo lường độ chính xác (Faithfulness, Answer Relevance...).
 - **Báo cáo:** Chạy thử nghiệm A/B Testing, phân tích các trường hợp trả lời sai và tổng hợp thành báo cáo `results.md`.
 

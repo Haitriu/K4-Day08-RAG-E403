@@ -1,77 +1,77 @@
 [
   {
-    "question": "Thời gian thử việc tối đa đối với công việc có chức danh nghề nghiệp cần trình độ từ cao đẳng trở lên là bao lâu?",
-    "expected_answer": "Thời gian thử việc không quá 60 ngày đối với công việc có chức danh nghề nghiệp cần trình độ chuyên môn, kỹ thuật từ cao đẳng trở lên.",
-    "expected_context": "Điều 25 Bộ luật Lao động 2019"
+    "question": "Người mua có thể yêu cầu trả hàng/hoàn tiền trong thời hạn bao lâu sau khi nhận hàng?",
+    "expected_answer": "Trong vòng 15 ngày kể từ khi giao hàng thành công (24 giờ đối với thực phẩm tươi sống/đông lạnh).",
+    "expected_context": "Trang Returns and Refunds Policy, mục Return/Refund Eligibility"
   },
   {
-    "question": "Mức lương thử việc của người lao động được quy định như thế nào?",
-    "expected_answer": "Tiền lương của người lao động trong thời gian thử việc do hai bên thỏa thuận nhưng ít nhất phải bằng 85% mức lương của công việc đó.",
-    "expected_context": "Điều 26 Bộ luật Lao động 2019"
+    "question": "Shopee hỗ trợ những phương thức thanh toán nào?",
+    "expected_answer": "ShopeePay Wallet, thẻ tín dụng/ghi nợ, trả góp qua thẻ, QR Code, chuyển khoản qua app ngân hàng, thẻ NAPAS, Apple Pay, Google Pay, và COD.",
+    "expected_context": "Trang Payment Methods Overview"
   },
   {
-    "question": "Trong thời gian thử việc theo Hợp đồng thử việc, công ty có bắt buộc phải đóng Bảo hiểm xã hội cho tôi không?",
-    "expected_answer": "Hợp đồng thử việc không thuộc đối tượng tham gia BHXH bắt buộc. Do đó, trong thời gian thử việc, công ty không bắt buộc đóng BHXH cho bạn.",
-    "expected_context": "Luật Bảo hiểm xã hội 2014 & Điều 24 Bộ luật Lao động 2019"
+    "question": "Người bán không được đăng bán những sản phẩm nào?",
+    "expected_answer": "Hàng giả/nhái, sản phẩm bất hợp pháp, vi phạm sở hữu trí tuệ, và các mặt hàng nằm trong danh sách cấm của sàn.",
+    "expected_context": "Trang Product Listing Regulations, mục Prohibited Content"
   },
   {
-    "question": "Nếu phải đi làm vào ngày nghỉ lễ, Tết thì người lao động được trả lương làm thêm giờ như thế nào?",
-    "expected_answer": "Người lao động làm thêm giờ vào ngày nghỉ lễ, tết, ngày nghỉ có hưởng lương, được trả ít nhất bằng 300% chưa kể tiền lương ngày lễ, tết, ngày nghỉ có hưởng lương đối với người lao động hưởng lương ngày.",
-    "expected_context": "Điều 98 Bộ luật Lao động 2019"
+    "question": "Làm thế nào để theo dõi tình trạng vận chuyển của đơn hàng?",
+    "expected_answer": "Người dùng có thể vào mục 'Đơn mua' trên ứng dụng, chọn đơn hàng tương ứng để xem hành trình vận chuyển chi tiết được cập nhật liên tục.",
+    "expected_context": "Hướng dẫn theo dõi đơn hàng (Customer Support)"
   },
   {
-    "question": "Công ty có được quyền trừ lương của nhân viên để thay cho hình thức xử lý kỷ luật khi nhân viên đi trễ không?",
-    "expected_answer": "Không. Pháp luật nghiêm cấm hành vi dùng hình thức phạt tiền, cắt lương thay việc xử lý kỷ luật lao động.",
-    "expected_context": "Điều 127 Bộ luật Lao động 2019"
+    "question": "Tôi cần cung cấp những bằng chứng gì khi yêu cầu hoàn tiền do nhận sai hàng?",
+    "expected_answer": "Cần cung cấp video mở hộp (unboxing) rõ mã vận đơn và hình ảnh chi tiết sản phẩm nhận được để chứng minh nhận sai hàng.",
+    "expected_context": "Hướng dẫn cung cấp bằng chứng trả hàng/hoàn tiền"
   },
   {
-    "question": "Công ty chậm trả lương 20 ngày thì có phải trả thêm tiền lãi cho nhân viên không?",
-    "expected_answer": "Trường hợp vì lý do bất khả kháng mà công ty chậm trả lương từ 15 ngày trở lên thì phải đền bù cho người lao động một khoản tiền ít nhất bằng số tiền lãi của số tiền trả chậm tính theo lãi suất huy động giao kỳ hạn 01 tháng.",
-    "expected_context": "Điều 97 Bộ luật Lao động 2019"
+    "question": "Tôi có thể thay đổi phương thức thanh toán sau khi đã nhấn nút đặt hàng không?",
+    "expected_answer": "Có thể, nhưng tính năng này chỉ áp dụng đối với các đơn hàng chưa hoàn tất thanh toán và đang nằm ở trạng thái 'Chờ thanh toán'.",
+    "expected_context": "Hướng dẫn thay đổi phương thức thanh toán"
   },
   {
-    "question": "Theo quy định, một ngày làm việc bình thường không được vượt quá bao nhiêu tiếng?",
-    "expected_answer": "Thời giờ làm việc bình thường không quá 08 giờ trong 01 ngày và không quá 48 giờ trong 01 tuần.",
-    "expected_context": "Điều 105 Bộ luật Lao động 2019"
+    "question": "Quy định về bảo mật đối với thông tin cá nhân của khách hàng là gì?",
+    "expected_answer": "Thông tin cá nhân chỉ được sử dụng để xử lý đơn hàng, hỗ trợ dịch vụ và sẽ không bị bán hoặc chia sẻ cho bên thứ ba không có thẩm quyền.",
+    "expected_context": "Chính sách Bảo mật (Privacy Policy)"
   },
   {
-    "question": "Nhân viên làm việc đủ 12 tháng trong điều kiện làm việc bình thường thì được nghỉ phép năm bao nhiêu ngày?",
-    "expected_answer": "Người lao động làm việc đủ 12 tháng cho một người sử dụng lao động thì được nghỉ hằng năm hưởng nguyên lương là 12 ngày làm việc đối với người làm công việc trong điều kiện bình thường.",
-    "expected_context": "Điều 113 Bộ luật Lao động 2019"
+    "question": "Ai sẽ là người chịu phí vận chuyển khi tôi bấm trả hàng/hoàn tiền?",
+    "expected_answer": "Nếu trả hàng hợp lệ (do lỗi từ người bán hoặc lỗi vận chuyển), người mua sẽ được miễn toàn bộ phí trả hàng nếu gửi qua đơn vị vận chuyển đối tác của sàn.",
+    "expected_context": "Chính sách Trả hàng và Hoàn tiền (Returns & Refunds)"
   },
   {
-    "question": "Khi bản thân kết hôn, người lao động được nghỉ việc riêng hưởng nguyên lương mấy ngày?",
-    "expected_answer": "Khi bản thân kết hôn, người lao động được nghỉ việc riêng và hưởng nguyên lương 03 ngày.",
-    "expected_context": "Điều 115 Bộ luật Lao động 2019"
+    "question": "Đơn hàng vận chuyển từ nước ngoài (quốc tế) có được hỗ trợ thanh toán khi nhận hàng (COD) không?",
+    "expected_answer": "Có, một số đơn hàng quốc tế vẫn được hỗ trợ thanh toán bằng tiền mặt khi nhận hàng (COD) tuỳ thuộc vào thiết lập của gian hàng.",
+    "expected_context": "Hướng dẫn mua hàng xuyên biên giới"
   },
   {
-    "question": "Lao động nữ được nghỉ chế độ thai sản trước và sau khi sinh con tổng cộng là bao nhiêu tháng?",
-    "expected_answer": "Lao động nữ được nghỉ thai sản trước và sau khi sinh con là 06 tháng. Thời gian nghỉ trước khi sinh tối đa không quá 02 tháng.",
-    "expected_context": "Điều 139 Bộ luật Lao động 2019"
+    "question": "Mất bao lâu thì tôi mới nhận được tiền hoàn về tài khoản sau khi hủy đơn hàng đã thanh toán qua thẻ tín dụng?",
+    "expected_answer": "Thời gian hoàn tiền qua thẻ tín dụng thường kéo dài từ 7-14 ngày làm việc tuỳ thuộc vào quy trình xử lý của ngân hàng phát hành thẻ.",
+    "expected_context": "Chính sách Hoàn tiền (Refunds)"
   },
   {
-    "question": "Lao động nam khi có vợ sinh con được nghỉ việc hưởng chế độ thai sản bao nhiêu ngày nếu vợ sinh thường?",
-    "expected_answer": "Lao động nam đang đóng BHXH khi vợ sinh con được nghỉ việc hưởng chế độ thai sản 05 ngày làm việc nếu vợ sinh thường.",
-    "expected_context": "Luật Bảo hiểm xã hội 2014"
+    "question": "Các món hàng cồng kềnh (như tủ lạnh, máy giặt) có được hỗ trợ đến tận nhà lấy để trả hàng không?",
+    "expected_answer": "Có, đối với sản phẩm cồng kềnh, người mua hoàn toàn có thể chọn hình thức yêu cầu đơn vị vận chuyển đến lấy hàng tận nhà.",
+    "expected_context": "Hướng dẫn trả hàng (Returns)"
   },
   {
-    "question": "Sau khi hết thời gian nghỉ thai sản, sức khỏe chưa phục hồi thì lao động nữ được nghỉ dưỡng sức bao nhiêu ngày?",
-    "expected_answer": "Lao động nữ ngay sau thời gian hưởng chế độ thai sản, trong khoảng 30 ngày đầu làm việc mà sức khoẻ chưa phục hồi thì được nghỉ dưỡng sức, phục hồi sức khoẻ từ 05 đến 10 ngày.",
-    "expected_context": "Luật Bảo hiểm xã hội 2014"
+    "question": "Người bán sẽ bị phạt như thế nào nếu liên tục giao hàng trễ cho đơn vị vận chuyển?",
+    "expected_answer": "Tỷ lệ giao hàng trễ cao sẽ dẫn đến việc người bán bị trừ điểm sao quả tạ, giảm độ uy tín và có thể bị hạn chế hiển thị sản phẩm trên sàn.",
+    "expected_context": "Quy định dành cho Người bán (Seller Regulations)"
   },
   {
-    "question": "Nếu ký Hợp đồng lao động không xác định thời hạn, khi muốn nghỉ việc tôi phải báo trước cho công ty bao lâu?",
-    "expected_answer": "Người lao động làm việc theo hợp đồng lao động không xác định thời hạn có quyền đơn phương chấm dứt hợp đồng lao động nhưng phải báo trước cho người sử dụng lao động ít nhất 45 ngày.",
-    "expected_context": "Điều 35 Bộ luật Lao động 2019"
+    "question": "Nếu đơn hàng của tôi bị thất lạc trong quá trình vận chuyển thì tôi phải làm sao?",
+    "expected_answer": "Người mua có quyền gửi yêu cầu hoàn tiền ngay lập tức với lý do không nhận được hàng. Nền tảng sẽ làm việc trực tiếp với đơn vị vận chuyển để đền bù.",
+    "expected_context": "Hướng dẫn hỗ trợ khách hàng (Customer Support)"
   },
   {
-    "question": "Công ty được quyền sa thải nhân viên trong những trường hợp nào?",
-    "expected_answer": "Công ty được áp dụng hình thức xử lý kỷ luật sa thải khi nhân viên có hành vi trộm cắp, tham ô, đánh bạc, cố ý gây thương tích, sử dụng ma túy, tiết lộ bí mật kinh doanh, hoặc tái phạm khi đang bị kỷ luật kéo dài thời hạn nâng lương, v.v.",
-    "expected_context": "Điều 125 Bộ luật Lao động 2019"
+    "question": "Tài khoản ShopeePay của tôi đang bị khóa, tôi có thể tiếp tục mua hàng được không?",
+    "expected_answer": "Vẫn có thể mua hàng bình thường, tuy nhiên bạn sẽ phải chọn các phương thức thanh toán thay thế khác như Thanh toán khi nhận hàng (COD) hoặc thẻ tín dụng.",
+    "expected_context": "Hướng dẫn thanh toán (Payment Methods)"
   },
   {
-    "question": "Nếu công ty sa thải nhân viên trái pháp luật, công ty sẽ phải bồi thường những gì?",
-    "expected_answer": "Phải nhận người lao động trở lại làm việc; trả tiền lương, đóng các loại BHXH, BHYT, BHTN trong những ngày người lao động không được làm việc; cộng thêm trả một khoản tiền ít nhất bằng 02 tháng tiền lương theo hợp đồng lao động.",
-    "expected_context": "Điều 41 Bộ luật Lao động 2019"
+    "question": "Shopee Xu có thể dùng để làm gì và nó có thời hạn sử dụng không?",
+    "expected_answer": "Shopee Xu dùng để khấu trừ trực tiếp vào số tiền phải thanh toán của đơn hàng tiếp theo. Xu sẽ hết hạn vào ngày cuối cùng của tháng thứ 3 kể từ ngày bạn nhận được.",
+    "expected_context": "Hướng dẫn sử dụng Xu"
   }
 ]

@@ -1,6 +1,6 @@
 # 📊 Báo Cáo Đánh Giá Chất Lượng RAG (Sử dụng RAGAS)
 
-> ⏳ *Hệ thống đang chờ được chạy file `eval_pipeline.py` để cập nhật kết quả đánh giá mới nhất dựa trên 15 câu hỏi vàng (Golden Dataset) về Luật Lao Động.*
+> ⏳ *Hệ thống đang chờ được chạy file `eval_pipeline.py` để cập nhật kết quả đánh giá mới nhất dựa trên 15 câu hỏi vàng (Golden Dataset) về Chính sách Thương mại điện tử (Shopee).*
 
 ## 1. Điểm Số Tổng Quan (Overall Scores)
 
