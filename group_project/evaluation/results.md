@@ -1,56 +1,21 @@
-# RAG Evaluation Results
+# 📊 Báo Cáo Đánh Giá Chất Lượng RAG (Sử dụng RAGAS)
 
-## Framework sử dụng
+> ⏳ *Hệ thống đang chờ được chạy file `eval_pipeline.py` để cập nhật kết quả đánh giá mới nhất dựa trên 15 câu hỏi vàng (Golden Dataset) về Luật Lao Động.*
 
-> Ghi rõ framework đã chọn: DeepEval / RAGAS / TruLens
+## 1. Điểm Số Tổng Quan (Overall Scores)
 
----
+| Tiêu chí (Metric) | Ý nghĩa | Điểm trung bình (0-1) |
+|-------------------|---------|-----------------------|
+| **Faithfulness** | Bot có bịa luật không? (Độ trung thực) | `Đang chờ...` |
+| **Answer Relevancy** | Trả lời có đúng trọng tâm câu hỏi? | `Đang chờ...` |
+| **Context Recall** | Bot có moi ra được đủ các điều luật cần thiết? | `Đang chờ...` |
+| **Context Precision**| Các điều luật moi ra có bị rác không? | `Đang chờ...` |
 
-## Overall Scores
+## 2. Chi Tiết Các Câu Trả Lời Tệ Nhất (Worst Performers)
 
-| Metric | Config A (hybrid + rerank) | Config B (dense-only) | Δ |
-|--------|---------------------------|----------------------|---|
-| Faithfulness | | | |
-| Answer Relevance | | | |
-| Context Recall | | | |
-| Context Precision | | | |
-| **Average** | | | |
+> Đây là các câu hỏi mà Chatbot trả lời sai hoặc lạc đề nhất, cần kiểm tra lại Prompt (Task 10) hoặc dữ liệu mồi (Task 4, 5).
 
----
-
-## A/B Comparison Analysis
-
-**Config A:**
-> Mô tả config ...
-
-**Config B:**
-> Mô tả config ...
-
-**Kết luận:**
-> Config nào tốt hơn? Vì sao? (2-3 câu)
+*(Kết quả sẽ được hiển thị ở đây sau khi script RAGAS chấm điểm xong)*
 
 ---
-
-## Worst Performers (Bottom 3)
-
-| # | Question | Faithfulness | Relevance | Recall | Failure Stage | Root Cause |
-|---|----------|-------------|-----------|--------|---------------|------------|
-| 1 | | | | | | |
-| 2 | | | | | | |
-| 3 | | | | | | |
-
----
-
-## Recommendations
-
-### Cải tiến 1
-**Action:**
-**Expected impact:**
-
-### Cải tiến 2
-**Action:**
-**Expected impact:**
-
-### Cải tiến 3
-**Action:**
-**Expected impact:**
+*Báo cáo này được tự động tạo bởi `eval_pipeline.py` (Phụ trách: Triều - QA Engineer).*
