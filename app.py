@@ -73,6 +73,7 @@ def init_state() -> None:
         "saved_answers": [],
         "font_scale": "Mặc định",
         "high_contrast": False,
+        "top_k": 5,
         "feedback": {},
     }
     for key, value in defaults.items():
@@ -356,11 +357,21 @@ def render_sidebar() -> None:
             if st.button(
                 label,
                 key=f"nav_{key}",
-                use_container_width=True,
+                width="stretch",
                 type="primary" if st.session_state.active_view == key else "secondary",
             ):
                 go_to(key)
                 st.rerun()
+
+        st.divider()
+        st.markdown("**Cấu hình tra cứu**")
+        st.slider(
+            "Số nguồn truy xuất",
+            min_value=3,
+            max_value=8,
+            key="top_k",
+            help="Số đoạn tài liệu tối đa được đưa vào câu trả lời.",
+        )
 
         st.divider()
         st.markdown("**Khả năng tiếp cận**")
@@ -402,6 +413,9 @@ def render_source_panel(sources: list[dict[str, Any]]) -> None:
             meta = source.get("metadata") or {}
             with st.expander(f"{index}. {source_identity(source)}", expanded=index == 1):
                 st.caption(source_citation(source))
+                score = source.get("score")
+                if isinstance(score, (int, float)) and not isinstance(score, bool):
+                    st.caption(f"Điểm truy xuất: {score:.4f}")
                 content = str(source.get("content") or "")
                 st.write(content[:650] + ("…" if len(content) > 650 else ""))
                 issued = meta.get("effective_date") or meta.get("date") or meta.get("year")
@@ -409,8 +423,8 @@ def render_source_panel(sources: list[dict[str, Any]]) -> None:
                     st.caption(f"Ngày ban hành/hiệu lực: {issued}")
                 url = meta.get("url") or meta.get("source_url")
                 if isinstance(url, str) and url.startswith(("http://", "https://")):
-                    st.link_button("Mở nội dung gốc", url, use_container_width=True)
-                if st.button("Lưu văn bản", key=f"save_source_{index}", use_container_width=True):
+                    st.link_button("Mở nội dung gốc", url, width="stretch")
+                if st.button("Lưu văn bản", key=f"save_source_{index}", width="stretch"):
                     save_source(source)
     st.markdown("</div>", unsafe_allow_html=True)
 
@@ -418,16 +432,16 @@ def render_source_panel(sources: list[dict[str, Any]]) -> None:
 def render_answer_actions(index: int, message: dict[str, Any]) -> None:
     cols = st.columns([1, 1, 1.15])
     with cols[0]:
-        if st.button("Lưu câu trả lời", key=f"save_answer_{index}", use_container_width=True):
+        if st.button("Lưu câu trả lời", key=f"save_answer_{index}", width="stretch"):
             if message["content"] not in st.session_state.saved_answers:
                 st.session_state.saved_answers.append(message["content"])
             st.toast("Đã lưu câu trả lời", icon="✅")
     with cols[1]:
-        if st.button("Chưa phù hợp", key=f"feedback_{index}", use_container_width=True):
+        if st.button("Chưa phù hợp", key=f"feedback_{index}", width="stretch"):
             st.session_state.feedback[str(index)] = "not_helpful"
             st.toast("Đã ghi nhận phản hồi")
     with cols[2]:
-        if st.button("Cần chuyên viên", key=f"expert_{index}", use_container_width=True):
+        if st.button("Cần chuyên viên", key=f"expert_{index}", width="stretch"):
             go_to("support")
             st.rerun()
 
@@ -446,7 +460,10 @@ def process_query(query: str) -> None:
             st.write("Đang phân tích tình huống và đối chiếu nguồn liên quan.")
             from src.task10_generation import generate_with_citation
 
-            response = generate_with_citation(clean_query, top_k=5)
+            response = generate_with_citation(
+                clean_query,
+                top_k=int(st.session_state.get("top_k", 5)),
+            )
             answer = response.get("answer") or "Chưa thể tạo câu trả lời từ nguồn hiện có."
             sources = response.get("sources") or []
             retrieval_source = response.get("retrieval_source", "none")
@@ -528,7 +545,7 @@ def render_ask_view() -> None:
                     label_visibility="collapsed",
                 )
                 submitted = st.form_submit_button(
-                    "Phân tích tình huống", type="primary", use_container_width=True
+                    "Phân tích tình huống", type="primary", width="stretch"
                 )
             if submitted and initial_query.strip():
                 process_query(initial_query)
@@ -538,7 +555,7 @@ def render_ask_view() -> None:
             question_columns = st.columns(2)
             for index, question in enumerate(SUGGESTED_QUESTIONS):
                 with question_columns[index % 2]:
-                    if st.button(question, key=f"suggestion_{index}", use_container_width=True):
+                    if st.button(question, key=f"suggestion_{index}", width="stretch"):
                         queue_question(question)
                         st.rerun()
         else:
@@ -553,7 +570,7 @@ def render_ask_view() -> None:
                     label_visibility="collapsed",
                 )
                 follow_up_submitted = st.form_submit_button(
-                    "Gửi câu hỏi", type="primary", use_container_width=True
+                    "Gửi câu hỏi", type="primary", width="stretch"
                 )
             if follow_up_submitted and query.strip():
                 process_query(query)
@@ -650,7 +667,7 @@ def render_support_view() -> None:
             placeholder="Không nhập CCCD, số tài khoản hoặc thông tin cá nhân nhạy cảm.",
         )
         acknowledged = st.checkbox("Tôi hiểu biểu mẫu này chưa gửi dữ liệu ra ngoài hệ thống")
-        if st.form_submit_button("Lưu bản nháp trong phiên", use_container_width=True):
+        if st.form_submit_button("Lưu bản nháp trong phiên", width="stretch"):
             if acknowledged:
                 st.success("Đã ghi nhận bản nháp trong phiên trình duyệt.")
             else:
