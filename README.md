@@ -562,7 +562,7 @@ run_dashboard()
 - **Task 6, 7, 8 (Advanced Retrieval):** Cài đặt BM25 cho Lexical Search (Task 6), thiết lập mô hình Reranking (Task 7) và cấu hình PageIndex fallback (Task 8).
 - **Task 9 & Supervisor:** Lắp ráp toàn bộ các luồng tìm kiếm (Semantic, Lexical, PageIndex) thành một Retrieval Pipeline hoàn chỉnh (hybrid search + reranking + fallback) và thiết lập mô hình `supervisor.py`.
 
-**2. Thành viên 2: Phạm Đức Hải Triều (2A202601980) - Data & Retrieval Specialist**
+**2. Thành viên 2: Võ Hồ Nhật Nam (2A202601700) - Data & Retrieval Specialist**
 - **Nhiệm vụ chính:** Phụ trách thu thập, chuẩn hoá dữ liệu (Task 1–3) và xây dựng ChromaDB (Task 4–5).
 - **Task 1 & 2 (Thu thập Data):** Tải các file PDF/DOCX Luật Lao Động và dùng `Crawl4AI` thu thập các bài báo giải đáp luật thực tế.
 - **Task 3 (Markdown):** Dùng `MarkItDown` để chuẩn hoá toàn bộ dữ liệu thô sang định dạng Markdown.
@@ -573,7 +573,7 @@ run_dashboard()
 - **Task 10 (LLM Generation):** Viết System Prompt chuyên biệt cho Luật, sắp xếp lại chunks tránh "lost in the middle" và ép LLM trả lời kèm Citation (trích dẫn nguồn luật).
 - **Giao diện (app.py):** Code giao diện Chatbot bằng Streamlit, tích hợp chức năng chat và hiển thị nguồn tài liệu rõ ràng.
 
-**4. Thành viên 4: Võ Hồ Nhật Nam (2A202601700) - Evaluation & QA Engineer**
+**4. Thành viên 4: Phạm Đức Hải Triều (2A202601980) - Evaluation & QA Engineer**
 - **Nhiệm vụ chính:** Tạo `golden_dataset.json` (15 câu hỏi), thực thi RAGAS `eval_pipeline.py` và viết `results.md`.
 - **Golden Dataset:** Tự biên soạn bộ dữ liệu 15 cặp Câu hỏi - Trả lời chuẩn về Luật Lao Động.
 - **Automated Eval:** Cài đặt framework RAGAS, viết kịch bản `eval_pipeline.py` tự động đo lường độ chính xác (Faithfulness, Answer Relevance...).
