@@ -1,27 +1,21 @@
-# Báo cáo đánh giá RAG và A/B testing
+# 📊 Báo Cáo Đánh Giá Chất Lượng RAG (Sử dụng RAGAS)
 
-> Chưa chạy chấm điểm RAGAS đầy đủ. Script và golden dataset đã sẵn sàng; việc
-> chạy 30 lượt sinh câu trả lời cùng các lượt LLM-as-a-judge cần môi trường
-> `requirements-eval.txt` và quyền sử dụng API có tính phí.
+> ⏳ *Hệ thống đang chờ được chạy file `eval_pipeline.py` để cập nhật kết quả đánh giá mới nhất dựa trên 15 câu hỏi vàng (Golden Dataset) về Chính sách Thương mại điện tử (Shopee).*
 
-## Trạng thái kiểm chứng cục bộ
+## 1. Điểm Số Tổng Quan (Overall Scores)
 
-| Hạng mục | Kết quả |
-|---|---|
-| Golden dataset Luật Lao động | 15/15 mẫu hợp lệ |
-| Unit/integration tests | 45 passed, 2 skipped |
-| Streamlit smoke test | Khởi động không exception |
-| End-to-end Hybrid → LLM | Thành công, có câu trả lời và sources |
-| PageIndex live fallback | Chưa upload corpus ra dịch vụ ngoài |
+| Tiêu chí (Metric) | Ý nghĩa | Điểm trung bình (0-1) |
+|-------------------|---------|-----------------------|
+| **Faithfulness** | Bot có bịa luật không? (Độ trung thực) | `Đang chờ...` |
+| **Answer Relevancy** | Trả lời có đúng trọng tâm câu hỏi? | `Đang chờ...` |
+| **Context Recall** | Bot có moi ra được đủ các điều luật cần thiết? | `Đang chờ...` |
+| **Context Precision**| Các điều luật moi ra có bị rác không? | `Đang chờ...` |
 
-## Cách tạo báo cáo số liệu
+## 2. Chi Tiết Các Câu Trả Lời Tệ Nhất (Worst Performers)
 
-```powershell
-python -m venv .venv-eval
-.\.venv-eval\Scripts\python.exe -m pip install -r requirements-eval.txt
-.\.venv-eval\Scripts\python.exe group_project\evaluation\eval_pipeline.py
-```
+> Đây là các câu hỏi mà Chatbot trả lời sai hoặc lạc đề nhất, cần kiểm tra lại Prompt (Task 10) hoặc dữ liệu mồi (Task 4, 5).
 
-Khi chạy thành công, `eval_pipeline.py` sẽ thay nội dung file này bằng điểm bốn
-metric, so sánh Hybrid + Reranking với Lexical-only, ba worst performers và đề
-xuất cải tiến. Không điền số liệu giả khi chưa thực hiện LLM-as-a-judge.
+*(Kết quả sẽ được hiển thị ở đây sau khi script RAGAS chấm điểm xong)*
+
+---
+*Báo cáo này được tự động tạo bởi `eval_pipeline.py` (Phụ trách: Triều - QA Engineer).*

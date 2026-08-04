@@ -14,9 +14,6 @@ data/_tmp_pdf/
 
 # Temp / cache
 .pytest_cache/
-.crawl4ai/
-.venv-python311-broken/
-.venv-eval/
 *.tmp
 pageindex_doc_ids.json
 pageindex_pdfs/

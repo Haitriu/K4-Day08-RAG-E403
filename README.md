@@ -1,6 +1,6 @@
 ---
-title: Vietnamese Labor Law RAG Chatbot
-emoji: ⚖️
+title: E-commerce Support RAG Chatbot
+emoji: 🛒
 colorFrom: blue
 colorTo: indigo
 sdk: streamlit
@@ -13,19 +13,21 @@ pinned: false
 
 **Chương 2 | Ngày 8 trong 15**
 
-> Nhóm triển khai biến thể **Trợ lý Pháp luật Lao động Việt Nam** trên khung bài RAG Pipeline v2.
+> Dùng chung chủ đề "E-commerce Policy / Customer Support" với biến thể K4 của Ngày 7 (`K4_VARIANT.md`), để pipeline Ngày 7 → Ngày 8 nhất quán.
 
 ---
 
 ## Mục Tiêu
 
-Xây dựng RAG pipeline end-to-end: thu thập văn bản và bài viết Luật Lao động → chuẩn hóa → indexing → hybrid retrieval → PageIndex fallback → generation có citation.
+Xây dựng một RAG pipeline thực tế, end-to-end, từ thu thập dữ liệu chính sách thương mại điện tử và hỗ trợ khách hàng → xử lý → indexing → retrieval (hybrid + vectorless fallback) → generation có citation.
 
 ---
 
 ## Chủ Đề Dữ Liệu
 
-Corpus gồm văn bản pháp luật chính thức (Bộ luật Lao động, Luật Bảo hiểm xã hội và văn bản liên quan) cùng các bài giải thích tình huống thực tế đã crawl. Golden dataset gồm 15 câu hỏi về thử việc, tiền lương, thời giờ làm việc, nghỉ phép, thai sản và chấm dứt hợp đồng.
+**Chính sách thương mại điện tử** (thanh toán, đổi trả/hoàn tiền, quy định người bán, quyền riêng tư) + **Hướng dẫn hỗ trợ khách hàng** (theo dõi đơn hàng, bằng chứng hoàn tiền, thay đổi phương thức thanh toán)
+
+Dữ liệu mẫu trong repo được crawl thật từ trang trung tâm trợ giúp công khai của **Shopee Vietnam** (help.shopee.vn) — xem chi tiết URL nguồn trong `src/task1_collect_legal_docs.py` và `src/task2_crawl_news.py`.
 
 ---
 
@@ -52,7 +54,7 @@ K4-Day08-RAG-Pipeline-Starter/
 │   ├── task8_pageindex_vectorless.py
 │   ├── task9_retrieval_pipeline.py
 │   ├── task10_generation.py
-├── supervisor.py          ← CLI tích hợp retrieval + generation
+│   └── supervisor.py      ← Pattern nâng cao: Supervisor + Workers song song
 ├── chroma_db/             ← Task 4: vector store đã index (sinh ra khi chạy, không tự viết tay)
 ├── tests/
 │   └── test_individual.py ← Chấm điểm phần Task 1-10 (pytest)
@@ -156,14 +158,14 @@ Các loại splitter phù hợp:
 
 **Embedding model gợi ý:**
 - `sentence-transformers/all-MiniLM-L6-v2` (nhẹ, nhanh)
-- `sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2` (multilingual, 384 chiều, phù hợp demo CPU)
+- `BAAI/bge-m3` (multilingual, tốt cho tiếng Việt)
 - OpenAI `text-embedding-3-small` (nếu có API key)
 
 **Vector Store — sử dụng ChromaDB (Vector Store mặc định của bài lab):**
 ```bash
 pip install chromadb
 ```
-- ChromaDB lưu trữ vector embeddings đa ngôn ngữ, metadata và thông tin phân đoạn local tại thư mục `chroma_db/`
+- ChromaDB lưu trữ vector embeddings (`BAAI/bge-m3`), metadata và thông tin phân đoạn local tại thư mục `chroma_db/`
 - Hỗ trợ truy vấn tìm kiếm tương đồng Cosine (Cosine Similarity Search) phục vụ Dense Retrieval ở Task 5
 
 **Yêu cầu:**
@@ -573,7 +575,7 @@ run_dashboard()
 
 **4. Thành viên 4: Phạm Đức Hải Triều (2A202601980) - Evaluation & QA Engineer**
 - **Nhiệm vụ chính:** Tạo `golden_dataset.json` (15 câu hỏi), thực thi RAGAS `eval_pipeline.py` và viết `results.md`.
-- **Golden Dataset:** Tự biên soạn bộ dữ liệu 15 cặp câu hỏi - trả lời chuẩn về Luật Lao động Việt Nam.
+- **Golden Dataset:** Tự biên soạn bộ dữ liệu 15 cặp Câu hỏi - Trả lời chuẩn về Chính sách Thương mại điện tử (Shopee).
 - **Automated Eval:** Cài đặt framework RAGAS, viết kịch bản `eval_pipeline.py` tự động đo lường độ chính xác (Faithfulness, Answer Relevance...).
 - **Báo cáo:** Chạy thử nghiệm A/B Testing, phân tích các trường hợp trả lời sai và tổng hợp thành báo cáo `results.md`.
 

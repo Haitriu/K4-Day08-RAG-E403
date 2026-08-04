@@ -59,9 +59,6 @@ def convert_legal_docs():
                 else:
                     print(f"  ✗ Bỏ qua ({e.__class__.__name__}): {e}")
                     continue
-            if not text_content or not text_content.strip():
-                print("  ⚠ Bỏ qua: PDF không có text layer; cần OCR trước khi convert")
-                continue
             output_path = output_dir / f"{filepath.stem}.md"
             output_path.write_text(text_content, encoding="utf-8")
             print(f"  ✓ Saved: {output_path}")
